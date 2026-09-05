@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Score System</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .summary {
+            background: #182337;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .summary h2 {
+            margin-top: 0;
+        }
+
+        .percent {
+            font-size: 45px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #303b50;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #7c5cff;
+            transition: 0.3s;
+        }
+
+        .add-subject {
+            background: #182337;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #7c5cff;
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .subject {
+            background: #182337;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subject-header h2 {
+            margin: 0;
+        }
+
+        .score-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background: #202d43;
+            border-radius: 10px;
+        }
+
+        .assignment {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .assignment input {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .delete {
+            background: #d9534f;
+        }
+
+        .add-work {
+            margin-top: 10px;
+        }
+
+        .warning {
+            color: #ffcc66;
+        }
+
+        .success {
+            color: #66e08a;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 95%;
+                margin: 20px auto;
+            }
+
+            .assignment {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .assignment input {
+                width: 100%;
+                margin: 3px 0;
+            }
+
+            .subject-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎓 Student Score System</h1>
+
+    <!-- สรุปคะแนนทั้งหมด -->
+    <div class="summary">
+
+        <h2>📊 สรุปผลการเรียน</h2>
+
+        <div id="overallPercent" class="percent">
+            0%
+        </div>
+
+        <div class="progress">
+            <div id="overallBar" class="progress-bar"></div>
+        </div>
+
+        <p id="overallScore">
+            คะแนนรวม: 0 / 0
+        </p>
+
+    </div>
+
+
+    <!-- เพิ่มวิชา -->
+    <div class="add-subject">
+
+        <h2>➕ เพิ่มวิชา</h2>
+
+        <input
+            type="text"
+            id="subjectName"
+            placeholder="ชื่อวิชา เช่น Database"
+        >
+
+        <button onclick="addSubject()">
+            เพิ่มวิชา
+        </button>
+
+    </div>
+
+
+    <!-- รายการวิชา -->
+    <div id="subjects"></div>
+
+</div>
+
+
+<script>
+
+    let subjects = [];
+
+
+    // =========================
+    // เพิ่มวิชา
+    // =========================
+
+    function addSubject() {
+
+        const nameInput = document.getElementById("subjectName");
+
+        const name = nameInput.value.trim();
+
+        if (name === "") {
+            alert("กรุณาใส่ชื่อวิชา");
+            return;
+        }
+
+        const subject = {
+
+            id: Date.now(),
+
+            name: name,
+
+            assignments: []
+
+        };
+
+        subjects.push(subject);
+
+        nameInput.value = "";
+
+        render();
+
+    }
+
+
+    // =========================
+    // ลบวิชา
+    // =========================
+
+    function deleteSubject(subjectId) {
+
+        subjects = subjects.filter(
+            subject => subject.id !== subjectId
+        );
+
+        render();
+
+    }
+
+
+    // =========================
+    // เพิ่มงาน
+    // =========================
+
+    function addAssignment(subjectId) {
+
+        const subject = subjects.find(
+            subject => subject.id === subjectId
+        );
+
+        subject.assignments.push({
+
+            id: Date.now(),
+
+            name: "งานใหม่",
+
+            maxScore: 0,
+
+            score: 0
+
+        });
+
+        render();
+
+    }
+
+
+    // =========================
+    // ลบงาน
+    // =========================
+
+    function deleteAssignment(subjectId, assignmentId) {
+
+        const subject = subjects.find(
+            subject => subject.id === subjectId
+        );
+
+        subject.assignments =
+            subject.assignments.filter(
+                assignment =>
+                    assignment.id !== assignmentId
+            );
+
+        render();
+
+    }
+
+
+    // =========================
+    // แก้ไขข้อมูล
+    // =========================
+
+    function updateAssignment(
+        subjectId,
+        assignmentId,
+        field,
+        value
+    ) {
+
+        const subject = subjects.find(
+            subject => subject.id === subjectId
+        );
+
+        const assignment = subject.assignments.find(
+            assignment =>
+                assignment.id === assignmentId
+        );
+
+        if (field === "name") {
+
+            assignment.name = value;
+
+        }
+
+        else {
+
+            assignment[field] =
+                Number(value) || 0;
+
+        }
+
+        render();
+
+    }
+
+
+    // =========================
+    // คำนวณคะแนนวิชา
+    // =========================
+
+    function calculateSubject(subject) {
+
+        let totalScore = 0;
+
+        let totalMaxScore = 0;
+
+        subject.assignments.forEach(
+            assignment => {
+
+                totalScore +=
+                    Number(assignment.score) || 0;
+
+                totalMaxScore +=
+                    Number(assignment.maxScore) || 0;
+
+            }
+        );
+
+        let percent = 0;
+
+        if (totalMaxScore > 0) {
+
+            percent =
+                (totalScore / totalMaxScore) * 100;
+
+        }
+
+        return {
+
+            totalScore,
+
+            totalMaxScore,
+
+            percent
+
+        };
+
+    }
+
+
+    // =========================
+    // แสดงผล
+    // =========================
+
+    function render() {
+
+        const container =
+            document.getElementById("subjects");
+
+        container.innerHTML = "";
+
+
+        subjects.forEach(subject => {
+
+            const result =
+                calculateSubject(subject);
+
+
+            const subjectElement =
+                document.createElement("div");
+
+            subjectElement.className =
+                "subject";
+
+
+            subjectElement.innerHTML = `
+
+                <div class="subject-header">
+
+                    <h2>
+                        📚 ${subject.name}
+                    </h2>
+
+                    <button
+                        class="delete"
+                        onclick="deleteSubject(${subject.id})"
+                    >
+                        ลบวิชา
+                    </button>
+
+                </div>
+
+
+                <div class="score-summary">
+
+                    <h3>
+                        คะแนนปัจจุบัน:
+                        ${result.totalScore}
+                        /
+                        ${result.totalMaxScore}
+                    </h3>
+
+                    <h2>
+                        ${result.percent.toFixed(2)}%
+                    </h2>
+
+                    <div class="progress">
+
+                        <div
+                            class="progress-bar"
+                            style="width:${Math.min(result.percent, 100)}%"
+                        ></div>
+
+                    </div>
+
+                    <p class="${
+                        result.percent >= 50
+                        ? "success"
+                        : "warning"
+                    }">
+
+                        ${
+                            result.percent >= 50
+
+                            ? "✅ คะแนนถึง 50% แล้ว"
+
+                            : `⚠️ ขาดอีก ${
+                                Math.max(
+                                    result.totalMaxScore * 0.5
+                                    - result.totalScore,
+                                    0
+                                ).toFixed(2)
+                            } คะแนนเพื่อถึง 50%`
+                        }
+
+                    </p>
+
+                </div>
+
+
+                <h3>📝 งาน / คะแนน</h3>
+
+
+                <div id="assignments-${subject.id}">
+
+                    ${
+                        subject.assignments.map(
+                            assignment => `
+
+                            <div class="assignment">
+
+                                <input
+                                    type="text"
+                                    value="${assignment.name}"
+                                    onchange="
+                                        updateAssignment(
+                                            ${subject.id},
+                                            ${assignment.id},
+                                            'name',
+                                            this.value
+                                        )
+                                    "
+                                >
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="คะแนนเต็ม"
+                                    value="${assignment.maxScore}"
+                                    onchange="
+                                        updateAssignment(
+                                            ${subject.id},
+                                            ${assignment.id},
+                                            'maxScore',
+                                            this.value
+                                        )
+                                    "
+                                >
+
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="คะแนนที่ได้"
+                                    value="${assignment.score}"
+                                    onchange="
+                                        updateAssignment(
+                                            ${subject.id},
+                                            ${assignment.id},
+                                            'score',
+                                            this.value
+                                        )
+                                    "
+                                >
+
+                                <button
+                                    class="delete"
+                                    onclick="
+                                        deleteAssignment(
+                                            ${subject.id},
+                                            ${assignment.id}
+                                        )
+                                    "
+                                >
+                                    ลบ
+                                </button>
+
+                            </div>
+
+                            `
+                        ).join("")
+                    }
+
+                </div>
+
+
+                <button
+                    class="add-work"
+                    onclick="addAssignment(${subject.id})"
+                >
+                    ➕ เพิ่มงาน
+                </button>
+
+            `;
+
+
+            container.appendChild(subjectElement);
+
+        });
+
+
+        updateOverall();
+
+    }
+
+
+    // =========================
+    // คำนวณภาพรวมทั้งหมด
+    // =========================
+
+    function updateOverall() {
+
+        let totalScore = 0;
+
+        let totalMaxScore = 0;
+
+
+        subjects.forEach(subject => {
+
+            const result =
+                calculateSubject(subject);
+
+            totalScore +=
+                result.totalScore;
+
+            totalMaxScore +=
+                result.totalMaxScore;
+
+        });
+
+
+        let percent = 0;
+
+
+        if (totalMaxScore > 0) {
+
+            percent =
+                (totalScore / totalMaxScore) * 100;
+
+        }
+
+
+        document.getElementById(
+            "overallPercent"
+        ).textContent =
+            percent.toFixed(2) + "%";
+
+
+        document.getElementById(
+            "overallScore"
+        ).textContent =
+            `คะแนนรวม: ${totalScore} / ${totalMaxScore}`;
+
+
+        document.getElementById(
+            "overallBar"
+        ).style.width =
+            Math.min(percent, 100) + "%";
+
+    }
+
+
+    // เริ่มต้นระบบ
+    render();
+
+</script>
+
+</body>
+</html>
